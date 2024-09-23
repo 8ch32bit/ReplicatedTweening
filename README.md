@@ -8,4 +8,5 @@ Example Usage:
 local TweenService = require(game.ReplicatedStorage.ReplicatedTweening)
 
 local Tween = TweenService:Create(workspace.ExampleTweenPart, TweenInfo.new(0.5, Enum.EasingStyle.Sine), { Transparency = 0 })
-Tween:Play()```
+Tween:Play()
+```
