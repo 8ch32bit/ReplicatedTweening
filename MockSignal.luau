@@ -29,7 +29,6 @@ function Signal:Connect(Function)
 	--// set Next as previous top node and set top node to this connection
 	Connection.Next = self.TopConnection
 	self.TopConnection = Connection
-	Connection.Function = Function
 	
 	function Connection.Disconnect()
 		local Current = self.TopConnection
