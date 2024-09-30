@@ -5,8 +5,13 @@ Download Package.rbxm and open it in studio
 Parent each item to where it belongs
 Example Usage:
 ```lua
-local TweenService = require(game.ReplicatedStorage.ReplicatedTweening)
+local TweenService = require(game:GetService("ReplicatedStorage").ReplicatedTweening)
 
 local Tween = TweenService:Create(workspace.ExampleTweenPart, TweenInfo.new(0.5, Enum.EasingStyle.Sine), { Transparency = 0 })
+Tween:Play()
+
+task.wait(0.5)
+
+local Tween = TweenService:Create(workspace.ExampleTweenPart, TweenInfo.new(0.5, Enum.EasingStyle.Sine), { Transparency = 1 })
 Tween:Play()
 ```
