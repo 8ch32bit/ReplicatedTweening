@@ -39,19 +39,20 @@ end
 
 --// remote handling
 
-local Actions = {
-	Play = function(ID, Instance, TweenInfo, Properties)
-		if not TweeningClient.Tweens[ID] then
-			TweenInfo = ReplicatedTweening:ArrayToTweenInfo(TweenInfo)
-			TweeningClient:LoadTween(ID, Instance, TweenInfo, Properties)
-		end
-		TweeningClient:RunTween(ID)
-	end,
-	Cancel = function(ID)
-		if not TweeningClient.Tweens[ID] then return end
-		TweeningClient:StopTween(ID)
-	end,
-}
+local Actions = {}
+
+function Actions.Play(ID, Instance, TweenInfo, Properties)
+	if not TweeningClient.Tweens[ID] then
+		TweenInfo = ReplicatedTweening:ArrayToTweenInfo(TweenInfo)
+		TweeningClient:LoadTween(ID, Instance, TweenInfo, Properties)
+	end
+	TweeningClient:RunTween(ID)
+end
+
+function Actions.Cancel(ID)
+	if not TweeningClient.Tweens[ID] then return end
+	TweeningClient:StopTween(ID)
+end
 
 ReplicatedTweening.Event.OnClientEvent:Connect(function(Action, ...)
 	Action = Actions[Action]
