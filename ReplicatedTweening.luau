@@ -8,7 +8,9 @@ local MockSignal = require(script.Parent:WaitForChild("MockSignal"))
 
 local function FuzzyEqual(Table0, Table1)
 	for Index, Value in Table0 do
-		if type(Value) == "table" then return FuzzyEqual(Table1[Index], Value) end
+		if type(Value) == "table" then
+			if not FuzzyEqual(Table1[Index], Value) then return false end
+		end
 		if Table1[Index] ~= Value then return false end
 	end
 	return true
@@ -20,7 +22,6 @@ local Tween = {}
 Tween.__index = Tween
 
 function Tween.new(Instance, TweenInfo, Properties)
-	--// look for an identical tween (no memory leaks on my watch)
 	local self = setmetatable({}, Tween)
 	self.Thread = nil
 	self.Instance = Instance
@@ -70,36 +71,22 @@ ReplicatedTweening.Event = Event
 ReplicatedTweening.TweenCache = {}
 
 function ReplicatedTweening:TweenInfoToArray(TweenInfo)
-	--// the extra indexes are for the custom tween infos
-	return {
-		if TweenInfo.Time then TweenInfo.Time elseif TweenInfo.Duration then TweenInfo.Duration else Enum.EasingStyle.Quad,
-		if TweenInfo.EasingStyle then TweenInfo.EasingStyle else Enum.EasingStyle.Quad,
-		if TweenInfo.EasingDirection then TweenInfo.EasingDirection else Enum.EasingDirection.Out,
-		if TweenInfo.RepeatCount then TweenInfo.RepeatCount else 0,
-		if TweenInfo.Reverses ~= nil then TweenInfo.Reverses elseif TweenInfo.Reverse then TweenInfo.Reverse else false,
-		if TweenInfo.DelayTime then TweenInfo.DelayTime elseif TweenInfo.DelayDuration then TweenInfo.DelayDuration else 0,
-	}
+	return { TweenInfo.Time, TweenInfo.EasingStyle, TweenInfo.EasingDirection, TweenInfo.RepeatCount, TweenInfo.Reverses, TweenInfo.DelayTime }
 end
 
 function ReplicatedTweening:ArrayToTweenInfo(Array)
-	return TweenInfo.new(
-		Array[1] or 1,
-		Array[2] or Enum.EasingStyle.Quad,
-		Array[3] or Enum.EasingDirection.Out,
-		Array[4] or 0,
-		Array[5] or false,
-		Array[6] or 0
-	)
+	return TweenInfo.new(table.unpack(Array))
 end
 
 function ReplicatedTweening:Create(Instance, TweenInfo, Properties)
 	TweenInfo = self:TweenInfoToArray(TweenInfo)
-	--// look for any identical tweens (so someone doesnt accidently create a memory leak)
+	--// look for any identical tweens (prevents memory leaks)
 	for _, Tween in self.TweenCache do
-		if Tween.Instance ~= Instance then continue end
-		if FuzzyEqual(Tween.Properties, Properties) then
-			if FuzzyEqual(Tween.TweenInfo, TweenInfo) then
-				return Tween
+		if Tween.Instance == Instance then
+			if FuzzyEqual(Tween.Properties, Properties) then
+				if FuzzyEqual(Tween.TweenInfo, TweenInfo) then
+					return Tween
+				end
 			end
 		end
 	end
