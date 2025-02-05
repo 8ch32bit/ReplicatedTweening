@@ -1,60 +1,58 @@
 --// Author: 8ch99
 --// Client replicated implementation of TweenService
 
+--!native
+--!optimize 2
+
 local TweenService = game:GetService("TweenService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+local BitBuffer = require(ReplicatedStorage:WaitForChild("BitBuffer"))
 local ReplicatedTweening = require(ReplicatedStorage:WaitForChild("ReplicatedTweening"))
 
---// @module TweeningClient
-
-local TweeningClient = {}
-TweeningClient.Tweens = {}
-TweeningClient.RunningTweens = {}
-
-function TweeningClient:LoadTween(ID, Instance, TweenInfo, Properties)
-	local Tween = TweenService:Create(Instance, TweenInfo, Properties)
-	self.Tweens[ID] = Tween
-	return Tween
-end
-
-function TweeningClient:RunTween(ID)
-	if self.RunningTweens[ID] then
-		task.cancel(self.RunningTweens[ID])
-	end
-	local Tween = self.Tweens[ID]
-	if not Tween then return end
-	Tween:Play()
-	local Info = Tween.TweenInfo
-	self.RunningTweens[ID] = task.delay((Info.Time + Info.DelayTime) * (Info.RepeatCount + 1), function()
-		self.RunningTweens[ID] = nil
-	end)
-end
-
-function TweeningClient:StopTween(ID)
-	if not self.RunningTweens[ID] then return end
-	task.cancel(self.RunningTweens[ID])
-	self.RunningTweens[ID] = nil
-end
-
---// remote handling
+local Tweens = {}
+local RunningTweens = {}
 
 local Actions = {}
 
-function Actions.Play(ID, Instance, TweenInfo, Properties)
-	if not TweeningClient.Tweens[ID] then
-		TweenInfo = ReplicatedTweening:ArrayToTweenInfo(TweenInfo)
-		TweeningClient:LoadTween(ID, Instance, TweenInfo, Properties)
+function Actions.Play(ID: string, Instance: Instance?, TweenInfo: buffer, Properties: buffer)
+	local Tween = Tweens[ID]
+
+	if Instance and not Tweens[ID] then
+		warn(ReplicatedTweening:DeserializeTweenInfo(TweenInfo))
+		Tween = TweenService:Create(Instance, ReplicatedTweening:DeserializeTweenInfo(TweenInfo), ReplicatedTweening:DeserializeProperties(Properties))
+		Tweens[ID] = Tween
 	end
-	TweeningClient:RunTween(ID)
+
+	if Tween then
+		if RunningTweens[ID] then
+			task.cancel(RunningTweens[ID])
+		end
+
+		local Info = Tween.TweenInfo
+
+		Tween:Play()
+
+		RunningTweens[ID] = task.delay((Info.Time + Info.DelayTime) * (Info.RepeatCount + 1), function()
+			RunningTweens[ID] = nil
+		end)
+	end
 end
 
-function Actions.Cancel(ID)
-	if not TweeningClient.Tweens[ID] then return end
-	TweeningClient:StopTween(ID)
+function Actions.Cancel(ID: string)
+	local Thread = RunningTweens[ID]
+
+	if Thread then
+		task.cancel(Thread)
+		RunningTweens[ID] = nil
+	end
+
+	Tweens[ID]:Cancel()
 end
 
 ReplicatedTweening.Event.OnClientEvent:Connect(function(Action, ...)
 	Action = Actions[Action]
-	if Action then return Action(...) end
+	if Action then
+		return Action(...)
+	end
 end)
