@@ -3,7 +3,7 @@ A roblox luau system that allows for replicated creation and playback of tweens 
 ### SETUP:
 Download Package.rbxm and open it in studio
 Parent each item to where it belongs
-Example Usage:
+### Example Usage:
 ```lua
 local TweenService = require(game:GetService("ReplicatedStorage").ReplicatedTweening)
 
